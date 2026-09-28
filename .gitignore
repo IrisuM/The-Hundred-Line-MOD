@@ -1,0 +1,31 @@
+# Local reverse-engineering inputs and downloaded tools (never redistribute).
+/.analysis/
+/.deps/
+/.tools/
+
+# Generated build/test files and release archives.
+/build/
+/dist/
+/release/
+__pycache__/
+*.py[cod]
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.dll
+*.exe
+*.zip
+*.log
+*.i64
+*.id0
+*.id1
+*.id2
+*.nam
+*.til
+
+# Editor-local state.
+/.vs/
+/.vscode/
+*.user
