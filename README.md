@@ -54,6 +54,8 @@ ShowGiftPreferences=1
 
 如需重新从本机系统 WinMM 生成代理导出，执行 `build.ps1 -RegenerateExports`，这一步需要 Python 3。WinMM 的 180 个命名导出和 ordinal 2 均保留，x64 汇编转发保存寄存器参数与栈参数，真实 DLL 仅从 System32 的绝对路径加载。
 
+代理允许系统缺少未使用的导出（例如 Wine/Proton 的 `WOWAppExit`），并记录函数名与序号；只有实际调用缺失函数时才记录错误并终止进程。运行 `test-proxy.ps1` 可在无需游戏 EXE 的情况下模拟缺失导出并验证转发。此检查不能替代 SteamOS/Proton 实机验证。
+
 验证程序只读映射游戏 EXE，检查两个特征码唯一性，并复制游戏的实际机器码到测试页运行：检查币与四类素材锁定、越界类型回退、恢复原指令，以及五种真实礼物喜好的显示分支。还验证 WinMM 导出和真实 API 转发。它不会运行游戏场景或修改存档。
 
 完整 DLL 加载与配置保护测试：运行 `test-integration.ps1 -GameExe 'D:\你的游戏目录\HUNDRED_LINE.exe'`（需要 Python 3）。测试只使用独立宿主与提取的指令片段。

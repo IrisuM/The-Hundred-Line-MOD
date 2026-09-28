@@ -166,8 +166,10 @@ static BOOL CALLBACK initialize(PINIT_ONCE, PVOID, PVOID *)
             GetProcAddress(realWinmm, exportNames[i] ? exportNames[i] : MAKEINTRESOURCEA(exportOrdinals[i]));
         if (!realExports[i])
         {
-            logLine("Missing system export ordinal: %u", exportOrdinals[i]);
-            return FALSE;
+            // Wine/Proton need not provide every export present on the build machine.
+            // An unused missing export must not prevent other calls or MOD initialization.
+            logLine("Unavailable system export: %s (ordinal: %u); deferred until called",
+                    exportNames[i] ? exportNames[i] : "<unnamed>", exportOrdinals[i]);
         }
     }
     // Export calls occur after loader initialization; no scanning or LoadLibrary in DllMain.
@@ -181,9 +183,22 @@ static BOOL CALLBACK initialize(PINIT_ONCE, PVOID, PVOID *)
 extern "C" FARPROC ResolveWinmm(unsigned index)
 {
     // The assembly dispatcher preserves all Windows x64 argument registers.
-    if (!InitOnceExecuteOnce(&initializeOnce, initialize, nullptr, nullptr) ||
-        index >= sizeof(exportNames) / sizeof(exportNames[0]) || !realExports[index])
+    if (!InitOnceExecuteOnce(&initializeOnce, initialize, nullptr, nullptr))
     {
+        logLine("Cannot initialize WinMM proxy");
+        RaiseFailFastException(nullptr, nullptr, 0);
+        return nullptr;
+    }
+    if (index >= sizeof(exportNames) / sizeof(exportNames[0]))
+    {
+        logLine("Invalid WinMM export index: %u", index);
+        RaiseFailFastException(nullptr, nullptr, 0);
+        return nullptr;
+    }
+    if (!realExports[index])
+    {
+        logLine("Cannot forward requested system export: %s (ordinal: %u)",
+                exportNames[index] ? exportNames[index] : "<unnamed>", exportOrdinals[index]);
         RaiseFailFastException(nullptr, nullptr, 0);
         return nullptr;
     }
