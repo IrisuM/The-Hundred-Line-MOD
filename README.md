@@ -11,7 +11,9 @@ Windows x64 原生 MOD，使用 `winmm.dll` 代理加载，在游戏进程内通
 
 ## 安装与配置
 
-关闭游戏，运行 `install.ps1`，或将发行包内 `winmm.dll` 和 `HundredLineMod.ini` 放到 **HUNDRED_LINE.exe 同级目录**，然后从 Steam 正常启动游戏。
+关闭游戏，运行 `install.ps1`，或仅将发行包内 `winmm.dll` 放到 **HUNDRED_LINE.exe 同级目录**，然后从 Steam 正常启动游戏。配置文件不存在时，DLL 会在同目录自动生成 `HundredLineMod.ini`，默认启用 5 倍探索素材与币、送礼喜好显示；已有配置不会被覆盖。
+
+目录无法写入时会尝试记录错误，配置不可用时仍使用内置默认值。生成配置过程中若写入失败，则本次停止应用补丁并记录错误。
 
 其他安装位置：
 

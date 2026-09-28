@@ -22,6 +22,8 @@ New-Item -ItemType Directory -Force build,dist | Out-Null
 $version = (Get-Content -Raw -LiteralPath VERSION).Trim()
 if ($version -notmatch '^\d+\.\d+(\.\d+)?$') { throw 'Invalid VERSION file.' }
 Set-Content -LiteralPath build/version.h -Value "#define HL_MOD_VERSION `"$version`"" -Encoding ascii
+$configBytes = [IO.File]::ReadAllBytes((Join-Path $PSScriptRoot 'HundredLineMod.ini'))
+Set-Content -LiteralPath build/default_config.h -Value "static constexpr unsigned char defaultConfig[] = {$($configBytes -join ',')};" -Encoding ascii
 & ml64 /nologo /c /Fo build/winmm_stubs.obj src/generated/winmm_stubs.asm
 if ($LASTEXITCODE) { throw 'Assembler failed' }
 & cl /nologo /std:c++17 /EHsc /W4 /O2 /MT /LD /utf-8 /Ibuild src/mod.cpp build/winmm_stubs.obj /Fo:build/mod.obj /link /DEF:src/generated/winmm.def /OUT:dist/winmm.dll /IMPLIB:build/winmm.lib /INCREMENTAL:NO

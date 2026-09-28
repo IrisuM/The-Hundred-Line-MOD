@@ -1,5 +1,6 @@
 #include "patches.h"
 #include "version.h"
+#include "default_config.h"
 #include "generated/winmm_exports.h"
 #include <cstdio>
 #include <cstdarg>
@@ -49,6 +50,32 @@ static bool flag(const wchar_t *name, const std::wstring &ini)
     throw std::runtime_error("Boolean options must be 0 or 1");
 }
 
+static void ensureConfig(const std::wstring &ini)
+{
+    // CREATE_NEW never truncates an existing user configuration.
+    HANDLE file = CreateFileW(ini.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        DWORD error = GetLastError();
+        if (error != ERROR_FILE_EXISTS && error != ERROR_ALREADY_EXISTS)
+            logLine("Cannot create default config (error %lu); using built-in defaults if unavailable",
+                    error);
+        return;
+    }
+    DWORD written{};
+    BOOL success = WriteFile(file, defaultConfig, sizeof(defaultConfig), &written, nullptr);
+    DWORD error = success ? ERROR_WRITE_FAULT : GetLastError();
+    CloseHandle(file);
+    if (!success || written != sizeof(defaultConfig))
+    {
+        DeleteFileW(ini.c_str());
+        logLine("Cannot write default config (error %lu)", error);
+        throw std::runtime_error("Default config could not be saved; initialization stopped");
+    }
+    logLine("Created default config: HundredLineMod.ini");
+}
+
 static void applyMod()
 {
     wchar_t host[32768]{};
@@ -60,6 +87,7 @@ static void applyMod()
     try
     {
         auto ini = modDirectory + L"HundredLineMod.ini";
+        ensureConfig(ini);
         if (!flag(L"Enabled", ini))
         {
             logLine("Disabled by config");
